@@ -1,0 +1,13 @@
+{
+  "name": "slacker",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Cross-platform text chat client (web / desktop / mobile / VSCode / CLI) sharing a single core.",
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "dev:server": "pnpm --filter server dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
