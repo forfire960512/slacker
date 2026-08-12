@@ -33,8 +33,19 @@ export interface ErrorEvent {
   reason: string;
 }
 
+/**
+ * Pushed once, right after a connection authenticates, with recent message
+ * history from the server's message store — lets a (re)connecting client
+ * catch up without a separate REST round-trip. Chronological order (oldest
+ * first), same as `messages` in core's store.
+ */
+export interface HistoryEvent {
+  type: "history";
+  messages: Message[];
+}
+
 /** Union of all events the server may send to a client. */
-export type ServerEvent = MessageEvent | ErrorEvent;
+export type ServerEvent = MessageEvent | ErrorEvent | HistoryEvent;
 
 /**
  * REST login contract (`POST /auth/login`) — separate from the WS event

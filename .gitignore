@@ -27,6 +27,9 @@ apps/vscode-extension/*.vsix
 npm-debug.log*
 pnpm-debug.log*
 
+# server local state (sqlite db, generated JWT secret) — see server/src/index.ts
+server/data/
+
 # editor / os
 .vscode/*
 !.vscode/extensions.json

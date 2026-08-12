@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocketPlugin from "@fastify/websocket";
@@ -12,27 +15,45 @@ import {
   type Message,
   type ServerEvent,
 } from "@slacker/core";
+import { createSqliteMessageStore } from "./store/sqliteMessageStore.js";
 
 /**
  * Minimal WebSocket chat server: `POST /auth/login` exchanges a nickname
  * for a signed JWT (no password — a claim, not an identity check), then
- * `/ws?token=...` accepts `ClientEvent`s and broadcasts the resulting
- * `Message` as a `ServerEvent` to every connected client (including the
- * sender). `Message.author` always comes from the verified token, never
- * from the client, so a connection can't claim to be someone else.
- *
- * In-memory only — no persistence, and JWT_SECRET is regenerated on every
- * restart if not set via env, invalidating all outstanding tokens. See
- * docs/ARCHITECTURE.md for the planned Postgres/full-auth layer this is a
- * stepping stone toward.
+ * `/ws?token=...` accepts `ClientEvent`s, persists the resulting `Message`
+ * (see store/), and broadcasts it as a `ServerEvent` to every connected
+ * client (including the sender). `Message.author` always comes from the
+ * verified token, never from the client, so a connection can't claim to be
+ * someone else. Real accounts/passwords are still out of scope — see
+ * docs/ARCHITECTURE.md for the planned full-auth layer this is a stepping
+ * stone toward.
  */
 
 const PORT = Number(process.env.PORT ?? 8080);
+const HISTORY_LIMIT = 50;
 
-if (!process.env.JWT_SECRET) {
-  console.warn("JWT_SECRET not set — using a random secret for this process. Tokens will not survive a restart.");
+// Everything here is real but disposable local state — gitignored (see
+// server/.gitignore), safe to delete to reset both sessions and history.
+const DATA_DIR = process.env.DATA_DIR ?? path.join(path.dirname(fileURLToPath(import.meta.url)), "../data");
+mkdirSync(DATA_DIR, { recursive: true });
+
+function loadOrCreateJwtSecret(): string {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  const secretPath = path.join(DATA_DIR, ".jwt-secret");
+  if (existsSync(secretPath)) {
+    return readFileSync(secretPath, "utf-8").trim();
+  }
+  const generated = randomUUID();
+  writeFileSync(secretPath, generated, "utf-8");
+  console.warn(
+    `JWT_SECRET not set — generated one and saved it to ${secretPath}, so restarting this server won't ` +
+      "log everyone out. Delete that file (or set JWT_SECRET) to invalidate existing tokens.",
+  );
+  return generated;
 }
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? randomUUID());
+const JWT_SECRET = new TextEncoder().encode(loadOrCreateJwtSecret());
+
+const messageStore = createSqliteMessageStore(path.join(DATA_DIR, "slacker.db"));
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // dev-permissive; narrow this for production.
@@ -86,6 +107,7 @@ app.get("/ws", { websocket: true }, async (socket, request) => {
   }
 
   clients.set(socket, username);
+  send(socket, { type: "history", messages: messageStore.recent(HISTORY_LIMIT) });
 
   socket.on("message", (raw) => {
     let event: ClientEvent;
@@ -115,6 +137,7 @@ app.get("/ws", { websocket: true }, async (socket, request) => {
       createdAt: Date.now(),
     };
 
+    messageStore.save(message);
     broadcast({ type: "message", message });
   });
 
