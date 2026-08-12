@@ -6,7 +6,7 @@ import {
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session, shell } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
@@ -181,9 +181,14 @@ export class ElectronCapacitorApp {
       this.loadMainWindow(this);
     }
 
-    // Security
+    // Security: only navigation within our own custom scheme is allowed to
+    // open a new Electron window. Anything else (chat message links, e.g.
+    // https://...) is opened in the OS's default browser instead of being
+    // silently swallowed — Electron doesn't do this automatically, unlike
+    // a plain browser tab's target="_blank".
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
       if (!details.url.includes(this.customScheme)) {
+        shell.openExternal(details.url);
         return { action: 'deny' };
       } else {
         return { action: 'allow' };
