@@ -53,7 +53,10 @@ function loadOrCreateJwtSecret(): string {
 }
 const JWT_SECRET = new TextEncoder().encode(loadOrCreateJwtSecret());
 
-const messageStore = await createMessageStore(DATA_DIR);
+const messageStore = await createMessageStore(DATA_DIR).catch((err) => {
+  console.error(`Failed to start message store: ${err instanceof Error ? err.message : err}`);
+  process.exit(1);
+});
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // dev-permissive; narrow this for production.
