@@ -152,7 +152,7 @@ app.get("/ws", { websocket: true }, async (socket, request) => {
       // (only the initial /ws upgrade shows up on its own), so this is the
       // only visibility into "a message actually arrived" without querying
       // the DB directly.
-      app.log.info({ id: message.id, author: message.author }, "message saved and broadcast");
+      app.log.info({ id: message.id, author: message.author, text: message.text }, "message saved and broadcast");
       broadcast({ type: "message", message });
     })();
   });
