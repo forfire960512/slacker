@@ -148,6 +148,11 @@ app.get("/ws", { websocket: true }, async (socket, request) => {
         send(socket, { type: "error", reason: "failed to save message" });
         return;
       }
+      // WS frames aren't auto-logged by Fastify the way HTTP requests are
+      // (only the initial /ws upgrade shows up on its own), so this is the
+      // only visibility into "a message actually arrived" without querying
+      // the DB directly.
+      app.log.info({ id: message.id, author: message.author }, "message saved and broadcast");
       broadcast({ type: "message", message });
     })();
   });
