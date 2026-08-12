@@ -1,0 +1,28 @@
+{
+  "name": "vscode-extension",
+  "displayName": "Slacker",
+  "description": "Slacker chat client for VS Code.",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "slacker.openChat",
+        "title": "Slacker: Open Chat"
+      }
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/vscode": "^1.125.0"
+  }
+}
