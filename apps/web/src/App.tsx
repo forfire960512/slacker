@@ -1,0 +1,13 @@
+import { useChatStore } from "@slacker/core";
+import { LoginForm, ChatView } from "@slacker/ui";
+import { AUTH_URL, WS_URL } from "./config.js";
+
+export function App() {
+  const username = useChatStore((state) => state.username);
+
+  return (
+    <div className="h-screen bg-slate-50">
+      {username === null ? <LoginForm authUrl={AUTH_URL} wsUrl={WS_URL} /> : <ChatView />}
+    </div>
+  );
+}

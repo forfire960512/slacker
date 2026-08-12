@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* packages/ui ships raw JSX with Tailwind class literals but no build step
+   of its own — this tells the v4 scanner to look past the workspace
+   boundary so those classes actually get generated CSS. */
+@source "../../../packages/ui/src";
