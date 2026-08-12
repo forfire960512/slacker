@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -28,6 +29,18 @@ import { createMessageStore } from "./store/index.js";
  * docs/ARCHITECTURE.md for the planned full-auth layer this is a stepping
  * stone toward.
  */
+
+// Windows consoles (PowerShell, cmd) default to a legacy codepage that
+// mangles Korean/CJK text in the console — pino's JSON log lines are valid
+// UTF-8 either way, this just fixes how the console *displays* them.
+// No-op (and harmless) on other platforms.
+if (process.platform === "win32") {
+  try {
+    execSync("chcp 65001", { stdio: "ignore" });
+  } catch {
+    // Best-effort — a console rendering glitch isn't worth failing startup over.
+  }
+}
 
 const PORT = Number(process.env.PORT ?? 8080);
 const HISTORY_LIMIT = 50;
