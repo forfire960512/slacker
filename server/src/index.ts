@@ -15,7 +15,7 @@ import {
   type Message,
   type ServerEvent,
 } from "@slacker/core";
-import { createSqliteMessageStore } from "./store/sqliteMessageStore.js";
+import { createMessageStore } from "./store/index.js";
 
 /**
  * Minimal WebSocket chat server: `POST /auth/login` exchanges a nickname
@@ -53,7 +53,7 @@ function loadOrCreateJwtSecret(): string {
 }
 const JWT_SECRET = new TextEncoder().encode(loadOrCreateJwtSecret());
 
-const messageStore = createSqliteMessageStore(path.join(DATA_DIR, "slacker.db"));
+const messageStore = await createMessageStore(DATA_DIR);
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // dev-permissive; narrow this for production.
@@ -107,38 +107,46 @@ app.get("/ws", { websocket: true }, async (socket, request) => {
   }
 
   clients.set(socket, username);
-  send(socket, { type: "history", messages: messageStore.recent(HISTORY_LIMIT) });
+  send(socket, { type: "history", messages: await messageStore.recent(HISTORY_LIMIT) });
 
   socket.on("message", (raw) => {
-    let event: ClientEvent;
-    try {
-      event = JSON.parse(raw.toString());
-    } catch {
-      send(socket, { type: "error", reason: "invalid JSON" });
-      return;
-    }
+    void (async () => {
+      let event: ClientEvent;
+      try {
+        event = JSON.parse(raw.toString());
+      } catch {
+        send(socket, { type: "error", reason: "invalid JSON" });
+        return;
+      }
 
-    if (event.type !== "send" || typeof event.text !== "string") {
-      send(socket, { type: "error", reason: "invalid event" });
-      return;
-    }
+      if (event.type !== "send" || typeof event.text !== "string") {
+        send(socket, { type: "error", reason: "invalid event" });
+        return;
+      }
 
-    const text = event.text.trim();
-    if (text.length === 0) {
-      send(socket, { type: "error", reason: "text must not be empty" });
-      return;
-    }
+      const text = event.text.trim();
+      if (text.length === 0) {
+        send(socket, { type: "error", reason: "text must not be empty" });
+        return;
+      }
 
-    const message: Message = {
-      id: randomUUID(),
-      text,
-      links: extractLinks(text),
-      author: username,
-      createdAt: Date.now(),
-    };
+      const message: Message = {
+        id: randomUUID(),
+        text,
+        links: extractLinks(text),
+        author: username,
+        createdAt: Date.now(),
+      };
 
-    messageStore.save(message);
-    broadcast({ type: "message", message });
+      try {
+        await messageStore.save(message);
+      } catch (err) {
+        app.log.error(err, "failed to persist message");
+        send(socket, { type: "error", reason: "failed to save message" });
+        return;
+      }
+      broadcast({ type: "message", message });
+    })();
   });
 
   socket.on("close", () => {

@@ -14,11 +14,14 @@ interface MessageRow {
  * SQLite-backed MessageStore using Node's built-in `node:sqlite` (still
  * experimental as of this Node version, but needs no native build step or
  * external service — unlike better-sqlite3 or Postgres — so it's the
- * lowest-friction way to get real persistence in dev). `dbPath` should
+ * default, zero-setup backend; see postgresMessageStore.ts for the real
+ * one, picked automatically when DATABASE_URL is set). `dbPath` should
  * point somewhere gitignored (see server/.gitignore) since it holds real
- * message content.
+ * message content. The methods are synchronous under the hood but still
+ * return Promises to satisfy MessageStore's (necessarily async, because
+ * Postgres is) interface.
  */
-export function createSqliteMessageStore(dbPath: string): MessageStore {
+export async function createSqliteMessageStore(dbPath: string): Promise<MessageStore> {
   const db = new DatabaseSync(dbPath);
 
   db.exec(`
@@ -40,10 +43,10 @@ export function createSqliteMessageStore(dbPath: string): MessageStore {
   );
 
   return {
-    save(message) {
+    async save(message) {
       insertStmt.run(message.id, message.text, JSON.stringify(message.links), message.author, message.createdAt);
     },
-    recent(limit) {
+    async recent(limit) {
       const rows = recentStmt.all(limit) as unknown as MessageRow[];
       return rows
         .map(

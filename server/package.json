@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -12,7 +12,8 @@
     "@fastify/cors": "^11.3.0",
     "@fastify/websocket": "^11.0.2",
     "fastify": "^5.2.1",
-    "jose": "^6.2.8"
+    "jose": "^6.2.8",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
