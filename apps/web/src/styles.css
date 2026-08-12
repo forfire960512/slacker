@@ -4,3 +4,100 @@
    of its own — this tells the v4 scanner to look past the workspace
    boundary so those classes actually get generated CSS. */
 @source "../../../packages/ui/src";
+
+/*
+ * Semantic color tokens, not hardcoded slate/sky/rose/etc. Tailwind
+ * palette classes — three layers, most specific wins:
+ *   1. :root          — light mode default
+ *   2. prefers-color-scheme: dark — system/OS dark mode (web, desktop)
+ *   3. body.vscode-*  — VS Code webview: matches the user's *actual*
+ *      active theme (whatever they've installed) instead of a generic
+ *      light/dark guess, using the --vscode-* variables VS Code injects
+ *      into every webview automatically. Only ever matches inside a VS
+ *      Code webview, since only VS Code adds that class — same CSS bundle
+ *      safely serves web/desktop/vscode-extension.
+ * `@theme inline` (not the same as an unqualified `@theme`) is what lets
+ * a Tailwind color token's value itself be `var(--something)` that keeps
+ * responding to the layers below at runtime, instead of a value baked in
+ * at build time.
+ */
+:root {
+  --slacker-bg: #f8fafc;
+  --slacker-surface: #ffffff;
+  --slacker-border: #e2e8f0;
+  --slacker-fg: #0f172a;
+  --slacker-fg-muted: #64748b;
+  --slacker-accent: #0f172a;
+  --slacker-accent-fg: #ffffff;
+  --slacker-link: #0284c7;
+  --slacker-link-hover: #0369a1;
+  --slacker-danger: #e11d48;
+  --slacker-status-connecting: #fef3c7;
+  --slacker-status-connecting-fg: #92400e;
+  --slacker-status-open: #d1fae5;
+  --slacker-status-open-fg: #065f46;
+  --slacker-status-closed: #ffe4e6;
+  --slacker-status-closed-fg: #9f1239;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --slacker-bg: #0f172a;
+    --slacker-surface: #1e293b;
+    --slacker-border: #334155;
+    --slacker-fg: #f1f5f9;
+    --slacker-fg-muted: #94a3b8;
+    --slacker-accent: #f1f5f9;
+    --slacker-accent-fg: #0f172a;
+    --slacker-link: #38bdf8;
+    --slacker-link-hover: #7dd3fc;
+    --slacker-danger: #fb7185;
+    --slacker-status-connecting: #451a03;
+    --slacker-status-connecting-fg: #fcd34d;
+    --slacker-status-open: #052e1f;
+    --slacker-status-open-fg: #6ee7b7;
+    --slacker-status-closed: #4c0519;
+    --slacker-status-closed-fg: #fda4af;
+  }
+}
+
+body.vscode-light,
+body.vscode-dark,
+body.vscode-high-contrast,
+body.vscode-high-contrast-light {
+  --slacker-bg: var(--vscode-editor-background);
+  --slacker-surface: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  --slacker-border: var(--vscode-widget-border, var(--vscode-panel-border));
+  --slacker-fg: var(--vscode-editor-foreground);
+  --slacker-fg-muted: var(--vscode-descriptionForeground);
+  --slacker-accent: var(--vscode-button-background);
+  --slacker-accent-fg: var(--vscode-button-foreground);
+  --slacker-link: var(--vscode-textLink-foreground);
+  --slacker-link-hover: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+  --slacker-danger: var(--vscode-errorForeground);
+  --slacker-status-connecting: color-mix(in srgb, var(--vscode-charts-yellow, #d29922) 20%, var(--slacker-surface));
+  --slacker-status-connecting-fg: var(--vscode-charts-yellow, #d29922);
+  --slacker-status-open: color-mix(in srgb, var(--vscode-charts-green, #3fb950) 20%, var(--slacker-surface));
+  --slacker-status-open-fg: var(--vscode-charts-green, #3fb950);
+  --slacker-status-closed: color-mix(in srgb, var(--vscode-charts-red, #f85149) 20%, var(--slacker-surface));
+  --slacker-status-closed-fg: var(--vscode-charts-red, #f85149);
+}
+
+@theme inline {
+  --color-app-bg: var(--slacker-bg);
+  --color-surface: var(--slacker-surface);
+  --color-border: var(--slacker-border);
+  --color-fg: var(--slacker-fg);
+  --color-fg-muted: var(--slacker-fg-muted);
+  --color-accent: var(--slacker-accent);
+  --color-accent-fg: var(--slacker-accent-fg);
+  --color-link: var(--slacker-link);
+  --color-link-hover: var(--slacker-link-hover);
+  --color-danger: var(--slacker-danger);
+  --color-status-connecting: var(--slacker-status-connecting);
+  --color-status-connecting-fg: var(--slacker-status-connecting-fg);
+  --color-status-open: var(--slacker-status-open);
+  --color-status-open-fg: var(--slacker-status-open-fg);
+  --color-status-closed: var(--slacker-status-closed);
+  --color-status-closed-fg: var(--slacker-status-closed-fg);
+}

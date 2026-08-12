@@ -8,7 +8,7 @@ export function App() {
   useSessionPersistence();
 
   return (
-    <div className="h-screen bg-slate-50">
+    <div className="h-screen bg-app-bg text-fg">
       {username === null ? <LoginForm authUrl={AUTH_URL} wsUrl={WS_URL} /> : <ChatView />}
     </div>
   );

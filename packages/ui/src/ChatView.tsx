@@ -11,12 +11,12 @@ export function ChatView() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+      <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-slate-900">{username}</span>
+          <span className="font-medium text-fg">{username}</span>
           <StatusBadge status={status} />
         </div>
-        <button type="button" onClick={logout} className="text-sm text-slate-500 hover:text-slate-800">
+        <button type="button" onClick={logout} className="text-sm text-fg-muted hover:text-fg">
           나가기
         </button>
       </header>

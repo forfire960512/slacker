@@ -18,19 +18,19 @@ export function MessageInput() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 border-t border-slate-200 p-3">
+    <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-3">
       <input
         type="text"
         value={text}
         onChange={(event) => setText(event.target.value)}
         disabled={disabled}
         placeholder={disabled ? "연결 중…" : "메시지를 입력하세요"}
-        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
+        className="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted disabled:opacity-60"
       />
       <button
         type="submit"
         disabled={disabled || text.trim().length === 0}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg disabled:opacity-40"
       >
         보내기
       </button>

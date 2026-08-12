@@ -31,22 +31,22 @@ export function LoginForm({ authUrl, wsUrl }: LoginFormProps) {
     <div className="flex h-full items-center justify-center">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-3 rounded-lg border border-slate-200 p-6 shadow-sm"
+        className="w-full max-w-sm space-y-3 rounded-lg border border-border bg-surface p-6 shadow-sm"
       >
-        <h1 className="text-lg font-semibold text-slate-900">닉네임으로 입장</h1>
+        <h1 className="text-lg font-semibold text-fg">닉네임으로 입장</h1>
         <input
           type="text"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           placeholder="닉네임"
           maxLength={32}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted"
         />
-        {lastError && <p className="text-sm text-rose-600">{lastError}</p>}
+        {lastError && <p className="text-sm text-danger">{lastError}</p>}
         <button
           type="submit"
           disabled={busy || username.trim().length === 0}
-          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg disabled:opacity-40"
         >
           {busy ? "입장 중…" : "입장하기"}
         </button>

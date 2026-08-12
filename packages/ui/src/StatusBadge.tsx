@@ -7,9 +7,9 @@ const LABELS: Record<ConnectionStatus, string> = {
 };
 
 const COLORS: Record<ConnectionStatus, string> = {
-  connecting: "bg-amber-100 text-amber-800",
-  open: "bg-emerald-100 text-emerald-800",
-  closed: "bg-rose-100 text-rose-800",
+  connecting: "bg-status-connecting text-status-connecting-fg",
+  open: "bg-status-open text-status-open-fg",
+  closed: "bg-status-closed text-status-closed-fg",
 };
 
 export function StatusBadge({ status }: { status: ConnectionStatus }) {
