@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
-import { useChatStore, type ConnectionStatus } from "@slacker/core";
+import { useChatStore, splitTextByLinks, type ConnectionStatus } from "@slacker/core";
 import { hyperlink } from "./hyperlink.js";
 
 const STATUS_COLOR: Record<ConnectionStatus, string> = {
@@ -56,12 +56,18 @@ export function ChatScreen() {
               </Text>
               <Text dimColor> {new Date(message.createdAt).toLocaleTimeString()}</Text>
             </Text>
-            <Text>{message.text}</Text>
-            {message.links.map((link) => (
-              <Text key={link} color="blue" underline>
-                {hyperlink(link)}
-              </Text>
-            ))}
+            <Text>
+              {splitTextByLinks(message.text).map((part, i) =>
+                // splitTextByLinks: even indices are plain text, odd are links.
+                i % 2 === 1 ? (
+                  <Text key={i} color="blue" underline>
+                    {hyperlink(part)}
+                  </Text>
+                ) : (
+                  part
+                ),
+              )}
+            </Text>
           </Box>
         ))}
       </Box>

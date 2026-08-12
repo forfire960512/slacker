@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useChatStore } from "@slacker/core";
+import { useChatStore, splitTextByLinks } from "@slacker/core";
 
 /** Scrolling message list. Subscribes to the core store directly. */
 export function MessageList() {
@@ -18,23 +18,24 @@ export function MessageList() {
             <span className="font-semibold text-slate-900">{message.author}</span>
             <span className="text-xs text-slate-400">{new Date(message.createdAt).toLocaleTimeString()}</span>
           </div>
-          <p className="whitespace-pre-wrap text-slate-700">{message.text}</p>
-          {message.links.length > 0 && (
-            <ul className="mt-1 space-y-0.5">
-              {message.links.map((link) => (
-                <li key={link}>
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-sky-600 underline underline-offset-2 hover:text-sky-700"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          <p className="whitespace-pre-wrap text-slate-700">
+            {splitTextByLinks(message.text).map((part, i) =>
+              // splitTextByLinks: even indices are plain text, odd are links.
+              i % 2 === 1 ? (
+                <a
+                  key={i}
+                  href={part}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sky-600 underline underline-offset-2 hover:text-sky-700"
+                >
+                  {part}
+                </a>
+              ) : (
+                <span key={i}>{part}</span>
+              ),
+            )}
+          </p>
         </div>
       ))}
       <div ref={bottomRef} />
