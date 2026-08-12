@@ -1,26 +1,49 @@
 import { randomUUID } from "node:crypto";
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import websocketPlugin from "@fastify/websocket";
+import { SignJWT, jwtVerify } from "jose";
 import type { WebSocket } from "ws";
-import { extractLinks, type ClientEvent, type Message, type ServerEvent } from "@slacker/core";
+import {
+  extractLinks,
+  type ClientEvent,
+  type LoginRequest,
+  type LoginResponse,
+  type Message,
+  type ServerEvent,
+} from "@slacker/core";
 
 /**
- * Minimal WebSocket chat server: accepts `ClientEvent`s on `/ws` and
- * broadcasts the resulting `Message` as a `ServerEvent` to every connected
- * client (including the sender). In-memory only for now — no persistence
- * or auth yet; see docs/ARCHITECTURE.md for the planned Postgres/JWT layer.
+ * Minimal WebSocket chat server: `POST /auth/login` exchanges a nickname
+ * for a signed JWT (no password — a claim, not an identity check), then
+ * `/ws?token=...` accepts `ClientEvent`s and broadcasts the resulting
+ * `Message` as a `ServerEvent` to every connected client (including the
+ * sender). `Message.author` always comes from the verified token, never
+ * from the client, so a connection can't claim to be someone else.
+ *
+ * In-memory only — no persistence, and JWT_SECRET is regenerated on every
+ * restart if not set via env, invalidating all outstanding tokens. See
+ * docs/ARCHITECTURE.md for the planned Postgres/full-auth layer this is a
+ * stepping stone toward.
  */
 
 const PORT = Number(process.env.PORT ?? 8080);
 
+if (!process.env.JWT_SECRET) {
+  console.warn("JWT_SECRET not set — using a random secret for this process. Tokens will not survive a restart.");
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? randomUUID());
+
 const app = Fastify({ logger: true });
+await app.register(cors, { origin: true }); // dev-permissive; narrow this for production.
 await app.register(websocketPlugin);
 
-const clients = new Set<WebSocket>();
+// Socket -> the username verified for that connection at auth time.
+const clients = new Map<WebSocket, string>();
 
 function broadcast(event: ServerEvent): void {
   const payload = JSON.stringify(event);
-  for (const client of clients) {
+  for (const client of clients.keys()) {
     if (client.readyState === client.OPEN) {
       client.send(payload);
     }
@@ -31,8 +54,38 @@ function send(client: WebSocket, event: ServerEvent): void {
   client.send(JSON.stringify(event));
 }
 
-app.get("/ws", { websocket: true }, (socket) => {
-  clients.add(socket);
+app.post<{ Body: LoginRequest }>("/auth/login", async (request, reply) => {
+  const username = request.body?.username?.trim();
+  if (!username || username.length < 1 || username.length > 32) {
+    return reply.status(400).send({ error: "username must be 1-32 characters" });
+  }
+
+  const token = await new SignJWT({})
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(username)
+    .setIssuedAt()
+    .setExpirationTime("24h")
+    .sign(JWT_SECRET);
+
+  const body: LoginResponse = { token, username };
+  return body;
+});
+
+app.get("/ws", { websocket: true }, async (socket, request) => {
+  const { token } = request.query as { token?: string };
+
+  let username: string;
+  try {
+    if (!token) throw new Error("missing token");
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    if (typeof payload.sub !== "string") throw new Error("token missing subject");
+    username = payload.sub;
+  } catch {
+    socket.close(4001, "unauthorized");
+    return;
+  }
+
+  clients.set(socket, username);
 
   socket.on("message", (raw) => {
     let event: ClientEvent;
@@ -43,7 +96,7 @@ app.get("/ws", { websocket: true }, (socket) => {
       return;
     }
 
-    if (event.type !== "send" || typeof event.text !== "string" || typeof event.author !== "string") {
+    if (event.type !== "send" || typeof event.text !== "string") {
       send(socket, { type: "error", reason: "invalid event" });
       return;
     }
@@ -58,7 +111,7 @@ app.get("/ws", { websocket: true }, (socket) => {
       id: randomUUID(),
       text,
       links: extractLinks(text),
-      author: event.author,
+      author: username,
       createdAt: Date.now(),
     };
 

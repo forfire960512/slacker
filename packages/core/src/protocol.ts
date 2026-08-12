@@ -7,11 +7,15 @@ import type { Message } from "./message.js";
  * this exact contract with no platform-specific variants.
  */
 
-/** Sent by a client to post a new chat message. */
+/**
+ * Sent by a client to post a new chat message. No `author` field — the
+ * server derives it from the connection's verified auth token (see
+ * `LoginRequest`/`LoginResponse` below), so a client can never claim to be
+ * someone else.
+ */
 export interface SendEvent {
   type: "send";
   text: string;
-  author: string;
 }
 
 /** Union of all events a client may send to the server. */
@@ -31,3 +35,21 @@ export interface ErrorEvent {
 
 /** Union of all events the server may send to a client. */
 export type ServerEvent = MessageEvent | ErrorEvent;
+
+/**
+ * REST login contract (`POST /auth/login`) — separate from the WS event
+ * union above, but owned by core so every client platform shares the same
+ * request/response shape. Nickname-claim only: no password, just proof
+ * (a signed token) that a given connection is speaking for `username` for
+ * the rest of its session. See docs/ARCHITECTURE.md for the planned
+ * full auth/persistence layer this is a stepping stone toward.
+ */
+export interface LoginRequest {
+  username: string;
+}
+
+/** Returned on successful login; `token` is presented back as `?token=` on `/ws`. */
+export interface LoginResponse {
+  token: string;
+  username: string;
+}
