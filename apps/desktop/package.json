@@ -1,0 +1,17 @@
+{
+  "name": "desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor-community/electron": "^5.0.1",
+    "@capacitor/cli": "^8.5.0",
+    "@types/node": "^22.10.5"
+  }
+}
