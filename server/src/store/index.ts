@@ -8,9 +8,8 @@ export type { MessageStore } from "./messageStore.js";
  * Picks Postgres when DATABASE_URL is set, otherwise falls back to the
  * zero-setup SQLite store — lets anyone clone the repo and run the server
  * without standing up a database first, while still supporting the real
- * backend docs/ARCHITECTURE.md settles on for production. See
- * postgresMessageStore.ts's NOTE — that path hasn't been run against a
- * real Postgres server in this dev environment, verify it yourself.
+ * backend docs/ARCHITECTURE.md settles on for production. Both paths
+ * verified working end-to-end (see server/README.md).
  */
 export async function createMessageStore(dataDir: string) {
   if (process.env.DATABASE_URL) {

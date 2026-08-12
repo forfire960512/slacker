@@ -19,14 +19,11 @@ Two backends behind the same `MessageStore` interface (`src/store/`):
   pnpm dev
   ```
 
-  **Status: written but not run.** This dev environment has neither Docker
-  nor a local Postgres install, so `src/store/postgresMessageStore.ts` has
-  only been typechecked, not executed against a real database. Before
-  relying on it: bring up `docker compose`, point `DATABASE_URL` at it, and
-  confirm `pnpm dev` boots cleanly and a login+message round-trip works
-  (same checks as the SQLite path — see the git history for the
-  session/message persistence commit for the exact verification steps used
-  there).
+  Verified against a real `docker compose up -d` Postgres instance: schema
+  creation (including the idempotent `IF NOT EXISTS` re-run path), a
+  login+send+broadcast round-trip, and reading a previously-saved message
+  back via the history event on a fresh connection — all confirmed working
+  end-to-end, JSONB `links` and `BIGINT created_at` included.
 
 ## Session persistence
 
