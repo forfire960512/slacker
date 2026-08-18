@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: slacker
+          POSTGRES_PASSWORD: slacker
+          POSTGRES_DB: slacker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U slacker"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      # Matches server/docker-compose.yml + server/.env.example — makes the
+      # postgres service container above reachable so
+      # server/src/store/postgresMessageStore.test.ts's reachability probe
+      # succeeds and that suite actually runs here, instead of skipping the
+      # way it does for contributors without Postgres running locally.
+      DATABASE_URL: postgres://slacker:slacker@localhost:5432/slacker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        # version omitted on purpose — reads the pinned "packageManager"
+        # field (pnpm@11.21.0) from the root package.json.
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Test
+        run: pnpm -r --if-present test

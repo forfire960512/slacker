@@ -108,11 +108,22 @@ GitHub Actions CI(`.github/workflows/ci.yml` — 레포에 CI 자체가 아직 �
 1. **VS Code 확장 실사용 확인** — Extension Development Host는 띄워봤지만 사용자가 실제로
    "Slacker: Open Chat" 실행해서 로그인/메시지/링크클릭/테마매칭 확인을 안 한 상태.
 2. **apps/mobile** — 이 환경에서 검증 불가, 나중에 Android Studio 있는 환경에서.
-3. **electron-builder 패키징** — `electron-builder.config.json`은 스캐폴딩만 있고 실제 설치파일
-   빌드는 한 번도 안 해봄.
+3. ~~electron-builder 패키징~~ — **완료**. 워크플로: `pnpm --filter web build` →
+   `pnpm --filter desktop sync` → `cd apps/desktop/electron && npm run build` →
+   `npx electron-builder build -c ./electron-builder.config.json`. NSIS 인스톨러
+   `dist/Slacker Setup 1.0.0.exe`(~78.6MB) 생성 확인, `win-unpacked/Slacker.exe`를 직접 실행해서
+   4개 프로세스(메인+헬퍼)로 크래시 없이 뜨는 것까지 확인함. **아직 안 한 것**: 인스톨러(.exe)로
+   실제 설치까지 해서 설치된 앱이 로그인/메시지까지 되는지 사용자가 직접 확인, macOS `dmg` 타겟은
+   이 환경(Windows)에서 검증 불가.
 4. **VS Code 확장 `.vsix` 패키징/마켓플레이스 배포** — 안 함.
-5. ~~자동화 테스트 스위트 없음~~ — **이번 세션에서 Phase 1(core+server) 완료**, 위 섹션 참고.
-   Phase 2(ui 컴포넌트, postgres store, CI)는 아직 안 함.
+5. ~~자동화 테스트 스위트 없음~~ — Phase 1(core+server) 완료, 위 섹션 참고. **Phase 2도 완료**:
+   `packages/ui`(StatusBadge, `@testing-library/react`+jsdom) / `server/src/store/postgresMessageStore.test.ts`
+   (reachability probe로 Postgres 없으면 자동 skip, 있으면 자동 실행 — opt-in 플래그 불필요) /
+   `.github/workflows/ci.yml`(postgres 서비스 컨테이너 포함) 전부 추가. 로컬 검증: `pnpm -r typecheck`
+   전체 그린, `pnpm -r --if-present test` 전체 그린(이 환경엔 Docker 데몬이 없어 postgres 스위트는
+   4개 skip으로 리포트됨 — 설계대로). **아직 검증 안 된 것**: 사용자 머신에서 `docker compose up -d`
+   후 postgres 스위트가 실제로 통과하는지, GitHub Actions에서 CI 워크플로 자체가 실제로 그린으로
+   도는지 (push 후 Actions 탭에서 확인 필요).
 
 ## 지금 진행하려던 작업: 실제 계정 시스템 (다음 세션에서 이어갈 것)
 

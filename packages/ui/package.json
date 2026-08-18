@@ -8,7 +8,9 @@
   },
   "types": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@slacker/core": "workspace:*"
@@ -18,7 +20,12 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4"
+    "@types/react-dom": "^19.2.4",
+    "jsdom": "^25.0.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }
